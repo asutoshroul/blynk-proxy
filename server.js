@@ -1,26 +1,32 @@
-const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
-const app = express();
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
 
-// Enable CORS for all routes
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+const BLYNK_AUTH_TOKEN = "3uAt31-2E_HzK2VSp0FKfo4noABBp5oR";
+
 app.use(cors());
 
-// Proxy endpoint
-app.get('/api/blynk', async (req, res) => {
-  try {
-    const { pin } = req.query;
-    const response = await axios.get(
-      `https://blynk.cloud/external/api/get?token=3uAt31-2E_HzK2VSp0FKfo4noABBp5oR&${pin}`
-    );
-    res.json({ value: response.data });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch data" });
-  }
+app.get("/get", async (req, res) => {
+    const [pinKey] = Object.keys(req.query);
+
+    if (!pinKey) {
+        return res.status(400).send("Pin not specified");
+    }
+
+    const url = `https://blynk.cloud/external/api/get?token=${BLYNK_AUTH_TOKEN}&${pinKey}`;
+    
+    try {
+        const response = await axios.get(url);
+        res.send(response.data);
+    } catch (error) {
+        console.error("Error fetching from Blynk API:", error.message);
+        res.status(500).send("Internal Server Error");
+    }
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Proxy server running on port ${PORT}`);
+    console.log(`Proxy server running on port ${PORT}`);
 });
